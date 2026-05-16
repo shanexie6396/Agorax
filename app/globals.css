@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --agx-bg: #f6f3ec;
+  --agx-bg-soft: #fdfbf7;
+  --agx-ink: #2f2923;
+  --agx-muted: #6b645c;
+  --agx-border: #d8d1c6;
+  --agx-ring: #c4a172;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--agx-bg);
+}
+
+body {
+  margin: 0;
+  color: var(--agx-ink);
+  background:
+    radial-gradient(1200px 600px at 0% 0%, rgba(214, 197, 167, 0.18), transparent 60%),
+    radial-gradient(1000px 700px at 100% 0%, rgba(196, 161, 114, 0.1), transparent 55%),
+    var(--agx-bg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(196, 161, 114, 0.35);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  transition: all 160ms ease;
+}
+
+input,
+textarea,
+select {
+  border-color: var(--agx-border);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(196, 161, 114, 0.25);
+}
+
+section,
+article {
+  box-shadow: 0 10px 26px rgba(44, 33, 20, 0.04);
+}
