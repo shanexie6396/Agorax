@@ -65,9 +65,6 @@ export async function POST(request: Request) {
         bullCase: ai.bull_case ?? [],
         bearCase: ai.bear_case ?? [],
         whatChangedRecently: ai.what_changed_recently ?? [],
-        keyRisks: ai.key_risks ?? [],
-        keyQuestionsBeforeInvesting: ai.key_questions_before_investing ?? [],
-        investmentThinkingSummary: ai.investment_thinking_summary ?? "",
         confidenceNotes: ai.confidence_notes ?? "",
       },
     });

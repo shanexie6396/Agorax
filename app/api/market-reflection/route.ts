@@ -193,7 +193,7 @@ export async function POST(request: Request) {
   try {
     const ai = await generateInvestmentThinking({
       userPrompt:
-        "Generate a concise market reflection for my watchlist. For each company, explicitly reference my thesis_now and sentiment_status, explain what changed in price, what news may explain moves, and whether latest context supports, weakens, or is neutral to that thesis. Add a dedicated thesis_check section that clearly states if I should HOLD, REFINE, or RECONSIDER my thesis for each ticker, with a one-line reason. In narrative fields, format company-level points as one company per line (e.g., 'AAPL: ...'). Include key risks and key questions. This is investment thinking, not financial advice.",
+        "Generate a concise market reflection for my watchlist. For each company, explicitly reference my thesis_now and sentiment_status, explain what changed in price, and infer likely drivers from the provided recent news + market context. Add a dedicated thesis_check_rows table-ready output with one row per ticker and fields: ticker, stance (HOLD/REFINE/RECONSIDER), price_move_summary, possible_reasons, thesis_implication, suggested_action. In narrative fields, format company-level points as one company per line (e.g., 'AAPL: ...'). Include key risks and key questions. This is investment thinking, not financial advice.",
       financeContext: stockContexts.map((item) => ({
         ticker: item.ticker,
         companyName: item.companyName,
@@ -225,12 +225,19 @@ export async function POST(request: Request) {
       analysis: {
         marketNewsSummary: ai.market_news_summary ?? "",
         thesisCheck: ai.thesis_check ?? "",
+        thesisCheckRows: Array.isArray(ai.thesis_check_rows)
+          ? ai.thesis_check_rows.map((row) => ({
+              ticker: String(row?.ticker ?? "").trim(),
+              stance: String(row?.stance ?? "").trim() || "REFINE",
+              priceMoveSummary: String(row?.price_move_summary ?? "").trim(),
+              possibleReasons: String(row?.possible_reasons ?? "").trim(),
+              thesisImplication: String(row?.thesis_implication ?? "").trim(),
+              suggestedAction: String(row?.suggested_action ?? "").trim(),
+            }))
+          : [],
         bullCase: ai.bull_case ?? [],
         bearCase: ai.bear_case ?? [],
         whatChangedRecently: ai.what_changed_recently ?? [],
-        keyRisks: ai.key_risks ?? [],
-        keyQuestionsBeforeInvesting: ai.key_questions_before_investing ?? [],
-        investmentThinkingSummary: ai.investment_thinking_summary ?? "",
         confidenceNotes: ai.confidence_notes ?? "",
       },
     };

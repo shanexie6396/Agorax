@@ -39,9 +39,6 @@ export default function StocksPage() {
       bullCase: string[];
       bearCase: string[];
       whatChangedRecently: string[];
-      keyRisks: string[];
-      keyQuestionsBeforeInvesting: string[];
-      investmentThinkingSummary: string;
       confidenceNotes: string;
     };
   } | null>(null);
@@ -254,9 +251,6 @@ export default function StocksPage() {
           bullCase: data.analysis?.bullCase ?? [],
           bearCase: data.analysis?.bearCase ?? [],
           whatChangedRecently: data.analysis?.whatChangedRecently ?? [],
-          keyRisks: data.analysis?.keyRisks ?? [],
-          keyQuestionsBeforeInvesting: data.analysis?.keyQuestionsBeforeInvesting ?? [],
-          investmentThinkingSummary: data.analysis?.investmentThinkingSummary ?? "",
           confidenceNotes: data.analysis?.confidenceNotes ?? "",
         },
       });
@@ -534,7 +528,7 @@ export default function StocksPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-1">
               <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
                 <p className="text-sm font-semibold text-stone-800">What changed recently</p>
                 <ul className="mt-2 space-y-1 text-sm text-stone-700">
@@ -545,39 +539,15 @@ export default function StocksPage() {
                   ))}
                 </ul>
               </div>
-              <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
-                <p className="text-sm font-semibold text-stone-800">Key risks</p>
-                <ul className="mt-2 space-y-1 text-sm text-stone-700">
-                  {(assistantResult.analysis.keyRisks.length > 0
-                    ? assistantResult.analysis.keyRisks
-                    : ["No risk items returned."]).map((item, idx) => (
-                    <li key={`risk-${idx}`}>- {item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
-                <p className="text-sm font-semibold text-stone-800">Questions before investing</p>
-                <ul className="mt-2 space-y-1 text-sm text-stone-700">
-                  {(assistantResult.analysis.keyQuestionsBeforeInvesting.length > 0
-                    ? assistantResult.analysis.keyQuestionsBeforeInvesting
-                    : ["No questions returned."]).map((item, idx) => (
-                    <li key={`q-${idx}`}>- {item}</li>
-                  ))}
-                </ul>
-              </div>
             </div>
-
-            <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
-              <p className="text-sm font-semibold text-stone-800">Investment thinking summary</p>
-              <p className="mt-2 text-sm leading-7 text-stone-700">
-                {assistantResult.analysis.investmentThinkingSummary || "No final summary returned."}
-              </p>
-              {assistantResult.analysis.confidenceNotes ? (
-                <p className="mt-3 text-xs text-stone-500">
-                  Confidence notes: {assistantResult.analysis.confidenceNotes}
+            {assistantResult.analysis.confidenceNotes ? (
+              <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
+                <p className="text-sm font-semibold text-stone-800">Confidence notes</p>
+                <p className="mt-2 text-sm leading-7 text-stone-700">
+                  {assistantResult.analysis.confidenceNotes}
                 </p>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
 
             <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
               <p className="text-sm font-semibold text-stone-800">News sources</p>

@@ -45,7 +45,7 @@ export async function generateInvestmentThinking(args: {
   watchlistContext: unknown;
 }) {
   const apiKey = getOpenAiApiKey();
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const model = process.env.OPENAI_MODEL || "gpt-5.4";
 
   const systemPrompt = `
 You are an investment thinking assistant, not a financial advisor.
@@ -56,12 +56,10 @@ In string fields, prefer line-separated company bullets like:
 Output valid JSON with these exact keys:
 - market_news_summary (string)
 - thesis_check (string)
+- thesis_check_rows (array of objects with keys: ticker, stance, price_move_summary, possible_reasons, thesis_implication, suggested_action)
 - bull_case (array of strings)
 - bear_case (array of strings)
 - what_changed_recently (array of strings)
-- key_risks (array of strings)
-- key_questions_before_investing (array of strings)
-- investment_thinking_summary (string)
 - confidence_notes (string)
 Do not include markdown code fences.
 Avoid direct buy/sell advice.
@@ -118,12 +116,17 @@ Avoid direct buy/sell advice.
     return JSON.parse(content) as {
       market_news_summary?: string;
       thesis_check?: string;
+      thesis_check_rows?: Array<{
+        ticker?: string;
+        stance?: string;
+        price_move_summary?: string;
+        possible_reasons?: string;
+        thesis_implication?: string;
+        suggested_action?: string;
+      }>;
       bull_case?: string[];
       bear_case?: string[];
       what_changed_recently?: string[];
-      key_risks?: string[];
-      key_questions_before_investing?: string[];
-      investment_thinking_summary?: string;
       confidence_notes?: string;
     };
   } catch {

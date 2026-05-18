@@ -7,12 +7,17 @@ type ReflectionData = {
   analysis: {
     marketNewsSummary: string;
     thesisCheck: string;
+    thesisCheckRows?: Array<{
+      ticker: string;
+      stance: string;
+      priceMoveSummary: string;
+      possibleReasons: string;
+      thesisImplication: string;
+      suggestedAction: string;
+    }>;
     bullCase: string[];
     bearCase: string[];
     whatChangedRecently: string[];
-    keyRisks: string[];
-    keyQuestionsBeforeInvesting: string[];
-    investmentThinkingSummary: string;
     confidenceNotes: string;
   };
   stocks: Array<{
@@ -283,9 +288,39 @@ export default function MarketPage() {
               <p className="text-sm font-semibold text-amber-900">
                 Thesis Check (Hold, Refine, or Reconsider)
               </p>
-              {renderMultilineText(
-                reflection.analysis.thesisCheck ||
-                  "No thesis check returned. Try regenerate for a fresh thesis judgement."
+              {reflection.analysis.thesisCheckRows &&
+              reflection.analysis.thesisCheckRows.length > 0 ? (
+                <div className="mt-3 overflow-hidden rounded-2xl border border-amber-200">
+                  <table className="min-w-full divide-y divide-amber-200 text-sm">
+                    <thead className="bg-amber-100/80 text-left text-amber-900">
+                      <tr>
+                        <th className="px-3 py-2 font-semibold">Ticker</th>
+                        <th className="px-3 py-2 font-semibold">Stance</th>
+                        <th className="px-3 py-2 font-semibold">Price Move</th>
+                        <th className="px-3 py-2 font-semibold">Possible Reasons</th>
+                        <th className="px-3 py-2 font-semibold">Thesis Implication</th>
+                        <th className="px-3 py-2 font-semibold">Suggested Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-amber-100 bg-amber-50/30 text-stone-800">
+                      {reflection.analysis.thesisCheckRows.map((row, idx) => (
+                        <tr key={`${row.ticker}-${idx}`} className="align-top">
+                          <td className="px-3 py-2 font-semibold">{row.ticker || "—"}</td>
+                          <td className="px-3 py-2">{row.stance || "REFINE"}</td>
+                          <td className="px-3 py-2">{row.priceMoveSummary || "—"}</td>
+                          <td className="px-3 py-2">{row.possibleReasons || "—"}</td>
+                          <td className="px-3 py-2">{row.thesisImplication || "—"}</td>
+                          <td className="px-3 py-2">{row.suggestedAction || "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                renderMultilineText(
+                  reflection.analysis.thesisCheck ||
+                    "No thesis check returned. Try regenerate for a fresh thesis judgement."
+                )
               )}
             </div>
 
@@ -313,7 +348,7 @@ export default function MarketPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid gap-4 lg:grid-cols-1">
               <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
                 <p className="text-sm font-semibold text-stone-800">What changed recently</p>
                 <ul className="mt-2 space-y-1 text-sm text-stone-700">
@@ -324,41 +359,16 @@ export default function MarketPage() {
                   ))}
                 </ul>
               </div>
-
-              <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
-                <p className="text-sm font-semibold text-stone-800">Key risks</p>
-                <ul className="mt-2 space-y-1 text-sm text-stone-700">
-                  {(reflection.analysis.keyRisks.length > 0
-                    ? reflection.analysis.keyRisks
-                    : ["No risks returned."]).map((item, idx) => (
-                    <li key={`market-risks-${idx}`}>- {item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
-                <p className="text-sm font-semibold text-stone-800">Questions before investing</p>
-                <ul className="mt-2 space-y-1 text-sm text-stone-700">
-                  {(reflection.analysis.keyQuestionsBeforeInvesting.length > 0
-                    ? reflection.analysis.keyQuestionsBeforeInvesting
-                    : ["No questions returned."]).map((item, idx) => (
-                    <li key={`market-questions-${idx}`}>- {item}</li>
-                  ))}
-                </ul>
-              </div>
             </div>
 
-            <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
-              <p className="text-sm font-semibold text-stone-800">Investment thinking summary</p>
-              {renderMultilineText(
-                reflection.analysis.investmentThinkingSummary || "No final summary returned."
-              )}
-              {reflection.analysis.confidenceNotes ? (
-                <p className="mt-3 text-xs text-stone-500">
-                  Confidence notes: {reflection.analysis.confidenceNotes}
+            {reflection.analysis.confidenceNotes ? (
+              <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
+                <p className="text-sm font-semibold text-stone-800">Confidence notes</p>
+                <p className="mt-2 text-sm leading-7 text-stone-700">
+                  {reflection.analysis.confidenceNotes}
                 </p>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
 
             <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
               <p className="text-sm font-semibold text-stone-800">3-trading-day stock moves</p>
