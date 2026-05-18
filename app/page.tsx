@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SP500Chart } from "@/components/SP500Chart";
-import { Playfair_Display } from "next/font/google";
+import { Lora, Playfair_Display } from "next/font/google";
 
 type Sp500Point = {
   date: string;
@@ -57,6 +57,11 @@ const HOMEPAGE_INDEXES: IndexConfig[] = [
 const displayHeadingFont = Playfair_Display({
   subsets: ["latin"],
   weight: ["600", "700"],
+});
+
+const supportingBodyFont = Lora({
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export default function HomePage() {
@@ -118,28 +123,45 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[2rem] border border-stone-200 bg-[#fbf9f5] p-6 lg:p-8">
-        <h1 className={`${displayHeadingFont.className} mt-4 text-4xl font-semibold tracking-tight text-stone-800 lg:text-5xl`}>
-          What is Agorax?
-        </h1>
-        <p className="mt-4 text-sm font-semibold uppercase tracking-wider text-stone-500">
-          Intro
-        </p>
-        <p className="mt-4 max-w-4xl text-base leading-7 text-stone-600">
-          Agorax is your AI workspace for investment thinking. It helps you think clearly by comparing your thesis with fresh data, news, price movement, and market context. Tell us what you believe and why. As the market changes, Agorax gives you ongoing feedback on what supports your thesis, what challenges it, and what may need a second look.
-        </p>
-        <p className="mt-4 max-w-4xl text-base leading-7 text-stone-700">
-          <strong>You own the decision. Agorax shows the signal.</strong>
-        </p>
-        <p className="mt-10 text-sm font-semibold uppercase tracking-wider text-stone-500">
-          To start
-        </p>
-        <p className="mt-4 max-w-4xl text-base leading-7 text-stone-600">
-          Use <strong>Dashboard</strong> to track the stocks you care about, including tickers, buy-in prices, outlook, and your current investment thesis.
-        </p>
-        <p className="mt-4 max-w-4xl text-base leading-7 text-stone-600">
-          Use <strong>Analysis</strong> to generate a daily AI reflection based on fresh price and news data. Agorax helps you understand what changed, why it may matter, and whether the latest market context strengthens, weakens, or leaves your thesis unchanged.
-        </p>
+      <section className="!shadow-none px-1 py-4 lg:px-2 lg:py-6">
+        <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-14">
+          <div className="agx-reveal agx-reveal-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+              Agorax
+            </p>
+            <h1
+              className={`${displayHeadingFont.className} mt-4 text-5xl font-semibold leading-[1.05] tracking-tight text-stone-800 sm:text-6xl lg:text-7xl`}
+            >
+              AI workspace for investment thinking.
+            </h1>
+          </div>
+
+          <div className={`${supportingBodyFont.className} agx-reveal agx-reveal-2 space-y-5 lg:pt-8`}>
+            <p className="text-base leading-7 text-stone-600">
+              Agorax helps you think clearly by comparing your thesis with fresh data, news,
+              price movement, and market context. Tell us what you believe and why. As the market
+              changes, Agorax gives you ongoing feedback on what supports your thesis, what
+              challenges it, and what may need a second look.
+            </p>
+            <p className="text-base leading-7 text-stone-700">
+              <strong>You own the decision. Agorax shows the signal.</strong>
+            </p>
+            <div className="h-px w-full bg-stone-300/70" />
+            <p className="text-sm font-semibold uppercase tracking-wider text-stone-500">
+              To start
+            </p>
+            <p className="text-base leading-7 text-stone-600">
+              Use <strong>Dashboard</strong> to track the stocks you care about, including tickers,
+              buy-in prices, outlook, and your current investment thesis.
+            </p>
+            <p className="text-base leading-7 text-stone-600">
+              Use <strong>Analysis</strong> to generate a daily AI reflection based on fresh price
+              and news data. Agorax helps you understand what changed, why it may matter, and
+              whether the latest market context strengthens, weakens, or leaves your thesis
+              unchanged.
+            </p>
+          </div>
+        </div>
       </section>
 
       {loading ? (
@@ -164,6 +186,7 @@ export default function HomePage() {
                 onTimeframeChange={(value) =>
                   setTimeframesBySymbol((prev) => ({ ...prev, [series.symbol]: value }))
                 }
+                variant={indexSeries.findIndex((item) => item.symbol === series.symbol) % 2 === 0 ? "sand" : "grey"}
               />
             </div>
           ))}

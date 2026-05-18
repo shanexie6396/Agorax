@@ -13,6 +13,7 @@ type SP500ChartProps = {
   description?: string;
   timeframe?: "month" | "year";
   onTimeframeChange?: (value: "month" | "year") => void;
+  variant?: "sand" | "grey";
 };
 
 const CHART_WIDTH = 1200;
@@ -41,8 +42,25 @@ export function SP500Chart({
   description = "",
   timeframe,
   onTimeframeChange,
+  variant = "sand",
 }: SP500ChartProps) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const palette =
+    variant === "grey"
+      ? {
+          areaFill: "#a8a29e",
+          lineStroke: "#44403c",
+          gridStroke: "#d6d3d1",
+          markerStroke: "#78716c",
+          markerRing: "#a8a29e",
+        }
+      : {
+          areaFill: "#d6c5a7",
+          lineStroke: "#57534e",
+          gridStroke: "#d6d3d1",
+          markerStroke: "#78716c",
+          markerRing: "#a8a29e",
+        };
 
   const chart = useMemo(() => {
     if (points.length === 0) {
@@ -121,7 +139,7 @@ export function SP500Chart({
                 className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                   timeframe === "month"
                     ? "bg-[#fbf9f5] text-stone-800"
-                    : "text-stone-600 hover:bg-[#ece6db] hover:text-stone-800"
+                    : "text-stone-600 hover:bg-stone-200/80 hover:text-stone-800"
                 }`}
               >
                 Past month
@@ -132,7 +150,7 @@ export function SP500Chart({
                 className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                   timeframe === "year"
                     ? "bg-[#fbf9f5] text-stone-800"
-                    : "text-stone-600 hover:bg-[#ece6db] hover:text-stone-800"
+                    : "text-stone-600 hover:bg-stone-200/80 hover:text-stone-800"
                 }`}
               >
                 Past year
@@ -164,15 +182,6 @@ export function SP500Chart({
             setHoverIndex(nextIndex);
           }}
         >
-          <rect
-            x={PADDING.left}
-            y={PADDING.top}
-            width={chart.plotWidth}
-            height={chart.plotHeight}
-            fill="#f6f3ec"
-            rx="20"
-          />
-
           {tickValues.map((tickValue, index) => {
             const y =
               PADDING.top + (index / yTicks) * chart.plotHeight;
@@ -183,7 +192,7 @@ export function SP500Chart({
                   y1={y}
                   x2={CHART_WIDTH - PADDING.right}
                   y2={y}
-                  stroke="#d6d3d1"
+                  stroke={palette.gridStroke}
                   strokeDasharray="4 6"
                 />
                 <text
@@ -218,8 +227,8 @@ export function SP500Chart({
             );
           })}
 
-          <path d={chart.areaPath} fill="#d6c5a7" opacity="0.35" />
-          <path d={chart.linePath} fill="none" stroke="#57534e" strokeWidth="3" />
+          <path d={chart.areaPath} fill={palette.areaFill} opacity="0.35" />
+          <path d={chart.linePath} fill="none" stroke={palette.lineStroke} strokeWidth="3" />
 
           {activePoint ? (
             <>
@@ -228,11 +237,11 @@ export function SP500Chart({
                 y1={PADDING.top}
                 x2={activePoint.x}
                 y2={CHART_HEIGHT - PADDING.bottom}
-                stroke="#78716c"
+                stroke={palette.markerStroke}
                 strokeDasharray="4 6"
               />
-              <circle cx={activePoint.x} cy={activePoint.y} r="6" fill="#57534e" />
-              <circle cx={activePoint.x} cy={activePoint.y} r="10" fill="transparent" stroke="#a8a29e" />
+              <circle cx={activePoint.x} cy={activePoint.y} r="6" fill={palette.lineStroke} />
+              <circle cx={activePoint.x} cy={activePoint.y} r="10" fill="transparent" stroke={palette.markerRing} />
             </>
           ) : null}
         </svg>

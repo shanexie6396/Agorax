@@ -30,6 +30,7 @@ export async function GET(request: Request) {
   const now = new Date();
   const endTimestamp = Math.floor(now.getTime() / 1000);
   const startTimestamp = endTimestamp - days * 24 * 60 * 60;
+  const interval = days <= 60 ? "1h" : "1d";
 
   try {
     const url = new URL(
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
     );
     url.searchParams.set("period1", String(startTimestamp));
     url.searchParams.set("period2", String(endTimestamp));
-    url.searchParams.set("interval", "1d");
+    url.searchParams.set("interval", interval);
     url.searchParams.set("events", "history");
 
     const response = await fetch(url.toString(), { cache: "no-store" });
