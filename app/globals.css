@@ -62,3 +62,13 @@ section,
 article {
   box-shadow: 0 10px 26px rgba(44, 33, 20, 0.04);
 }
+
+@keyframes floatCat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}

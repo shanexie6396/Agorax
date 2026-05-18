@@ -82,6 +82,8 @@ export function AppShell({ children }: AppShellProps) {
             </p>
           </div>
         ) : null}
+
+        <div className="mt-auto" />
       </aside>
 
       {mobileOpen ? (
