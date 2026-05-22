@@ -20,6 +20,9 @@ type ReflectionData = {
     whatChangedRecently: string[];
     confidenceNotes: string;
   };
+  analysisTranslations?: {
+    zhCN?: ReflectionData["analysis"];
+  };
   stocks: Array<{
     ticker: string;
     companyName: string | null;
@@ -37,6 +40,9 @@ type ReflectionData = {
 };
 
 export default function MarketPage() {
+  const [displayLanguage, setDisplayLanguage] = useState<"en" | "zh-CN">("en");
+  const [generationTranslationMode, setGenerationTranslationMode] = useState<"en" | "both">("en");
+  const [translationError, setTranslationError] = useState("");
   const [reflectionLoading, setReflectionLoading] = useState(false);
   const [reflectionError, setReflectionError] = useState("");
   const [reflectionGeneratedAt, setReflectionGeneratedAt] = useState("");
@@ -53,6 +59,11 @@ export default function MarketPage() {
   >([]);
   const [selectedHistoryId, setSelectedHistoryId] = useState<string>("");
   const [reflection, setReflection] = useState<ReflectionData | null>(null);
+  const currentAnalysis =
+    displayLanguage === "zh-CN" && reflection?.analysisTranslations?.zhCN
+      ? reflection.analysisTranslations.zhCN
+      : reflection?.analysis;
+  const canShowChinese = Boolean(reflection?.analysisTranslations?.zhCN);
 
   function renderMultilineText(value: unknown) {
     const normalized =
@@ -131,7 +142,7 @@ export default function MarketPage() {
       const res = await fetch("/api/market-reflection", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ force }),
+        body: JSON.stringify({ force, translation_mode: generationTranslationMode }),
       });
 
       if (!res.ok) {
@@ -143,6 +154,10 @@ export default function MarketPage() {
       setReflection(data.reflection ?? null);
       setReflectionGeneratedAt(data.generatedAt ?? "");
       setCacheAvailable(data.cacheAvailable !== false);
+      setTranslationError(data.translationWarning ?? "");
+      if (displayLanguage === "zh-CN" && !data?.reflection?.analysisTranslations?.zhCN) {
+        setDisplayLanguage("en");
+      }
       await loadHistory();
     } catch (error) {
       setReflectionError(
@@ -302,10 +317,67 @@ export default function MarketPage() {
           >
             Delete all history
           </button>
+          <div className="inline-flex rounded-2xl border border-stone-300 bg-[#fffdfa] p-1">
+            <button
+              type="button"
+              onClick={() => setGenerationTranslationMode("en")}
+              className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                generationTranslationMode === "en"
+                  ? "bg-stone-700 text-stone-100"
+                  : "text-stone-700 hover:bg-[#ece6db]"
+              }`}
+            >
+              Generate EN
+            </button>
+            <button
+              type="button"
+              onClick={() => setGenerationTranslationMode("both")}
+              className={`rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                generationTranslationMode === "both"
+                  ? "bg-stone-700 text-stone-100"
+                  : "text-stone-700 hover:bg-[#ece6db]"
+              }`}
+            >
+              Generate EN+文
+            </button>
+          </div>
+          <div className="inline-flex rounded-2xl border border-stone-300 bg-[#fffdfa] p-1">
+            <button
+              type="button"
+              onClick={() => setDisplayLanguage("en")}
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                displayLanguage === "en"
+                  ? "bg-stone-700 text-stone-100"
+                  : "text-stone-700 hover:bg-[#ece6db]"
+              }`}
+            >
+              E
+            </button>
+            <button
+              type="button"
+              onClick={() => setDisplayLanguage("zh-CN")}
+              disabled={!canShowChinese}
+              className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                displayLanguage === "zh-CN"
+                  ? "bg-stone-700 text-stone-100"
+                  : "text-stone-700 hover:bg-[#ece6db]"
+              }`}
+            >
+              文
+            </button>
+          </div>
         </div>
 
         {reflectionError ? (
           <p className="mt-4 text-sm text-red-600">{reflectionError}</p>
+        ) : null}
+        {translationError ? (
+          <p className="mt-2 text-sm text-amber-700">{translationError}</p>
+        ) : null}
+        {displayLanguage === "zh-CN" && !canShowChinese ? (
+          <p className="mt-2 text-sm text-stone-600">
+            This report was generated in English-only mode. Regenerate with EN+文 for instant switching.
+          </p>
         ) : null}
 
         {reflectionGeneratedAt ? (
@@ -320,11 +392,13 @@ export default function MarketPage() {
           </p>
         ) : null}
 
-        {reflection ? (
+        {reflection && currentAnalysis ? (
           <div className="mt-6 space-y-5">
             <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
               <p className="text-sm font-semibold text-stone-800">Anlaysis/news summary</p>
-              {renderMultilineText(reflection.analysis.marketNewsSummary || "No summary returned.")}
+              {renderMultilineText(
+                currentAnalysis.marketNewsSummary || "No summary returned."
+              )}
             </div>
 
             <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
@@ -334,8 +408,8 @@ export default function MarketPage() {
               <p className="mt-1 text-xs text-amber-800">
                 Note: "Hold" means hold your current thesis stance, not a buy/sell/hold trade call.
               </p>
-              {reflection.analysis.thesisCheckRows &&
-              reflection.analysis.thesisCheckRows.length > 0 ? (
+              {currentAnalysis.thesisCheckRows &&
+              currentAnalysis.thesisCheckRows.length > 0 ? (
                 <div className="mt-3 overflow-hidden rounded-2xl border border-amber-200">
                   <table className="min-w-full divide-y divide-amber-200 text-sm">
                     <thead className="bg-amber-100/80 text-left text-amber-900">
@@ -350,7 +424,7 @@ export default function MarketPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-amber-100 bg-amber-50/30 text-stone-800">
-                      {reflection.analysis.thesisCheckRows.map((row, idx) => (
+                      {currentAnalysis.thesisCheckRows.map((row, idx) => (
                         <tr key={`${row.ticker}-${idx}`} className="align-top">
                           {(() => {
                             const thesisStance = describeThesisStance(
@@ -386,7 +460,7 @@ export default function MarketPage() {
                 </div>
               ) : (
                 renderMultilineText(
-                  reflection.analysis.thesisCheck ||
+                  currentAnalysis.thesisCheck ||
                     "No thesis check returned. Try regenerate for a fresh thesis judgement."
                 )
               )}
@@ -396,8 +470,8 @@ export default function MarketPage() {
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
                 <p className="text-sm font-semibold text-emerald-800">Bull case</p>
                 <ul className="mt-2 space-y-1 text-sm text-emerald-900">
-                  {(reflection.analysis.bullCase.length > 0
-                    ? reflection.analysis.bullCase
+                  {(currentAnalysis.bullCase.length > 0
+                    ? currentAnalysis.bullCase
                     : ["No bull-case points returned."]).map((item, idx) => (
                     <li key={`market-bull-${idx}`}>- {item}</li>
                   ))}
@@ -407,8 +481,8 @@ export default function MarketPage() {
               <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-4">
                 <p className="text-sm font-semibold text-rose-800">Bear case</p>
                 <ul className="mt-2 space-y-1 text-sm text-rose-900">
-                  {(reflection.analysis.bearCase.length > 0
-                    ? reflection.analysis.bearCase
+                  {(currentAnalysis.bearCase.length > 0
+                    ? currentAnalysis.bearCase
                     : ["No bear-case points returned."]).map((item, idx) => (
                     <li key={`market-bear-${idx}`}>- {item}</li>
                   ))}
@@ -420,8 +494,8 @@ export default function MarketPage() {
               <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
                 <p className="text-sm font-semibold text-stone-800">What changed recently</p>
                 <ul className="mt-2 space-y-1 text-sm text-stone-700">
-                  {(reflection.analysis.whatChangedRecently.length > 0
-                    ? reflection.analysis.whatChangedRecently
+                  {(currentAnalysis.whatChangedRecently.length > 0
+                    ? currentAnalysis.whatChangedRecently
                     : ["No items returned."]).map((item, idx) => (
                     <li key={`market-changed-${idx}`}>- {item}</li>
                   ))}
@@ -429,11 +503,11 @@ export default function MarketPage() {
               </div>
             </div>
 
-            {reflection.analysis.confidenceNotes ? (
+            {currentAnalysis.confidenceNotes ? (
               <div className="rounded-2xl border border-stone-200 bg-[#fffdfa] p-4">
                 <p className="text-sm font-semibold text-stone-800">Confidence notes</p>
                 <p className="mt-2 text-sm leading-7 text-stone-700">
-                  {reflection.analysis.confidenceNotes}
+                  {currentAnalysis.confidenceNotes}
                 </p>
               </div>
             ) : null}

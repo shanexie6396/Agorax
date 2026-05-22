@@ -1,5 +1,5 @@
 import { fetchFinnhubQuote, fetchFinnhubRecentTradingDays } from "@/lib/finnhub";
-import { generateInvestmentThinking } from "@/lib/openai";
+import { generateInvestmentThinking, translateReflection } from "@/lib/openai";
 import { supabase } from "@/lib/supabase";
 import { searchRecentNews } from "@/lib/tavily";
 
@@ -89,15 +89,20 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  let body: { user_id?: string; force?: boolean } = {};
+  let body: { user_id?: string; force?: boolean; translation_mode?: "en" | "both" } = {};
   try {
-    body = (await request.json()) as { user_id?: string; force?: boolean };
+    body = (await request.json()) as {
+      user_id?: string;
+      force?: boolean;
+      translation_mode?: "en" | "both";
+    };
   } catch {
     // no-op
   }
 
   const userId = String(body.user_id ?? "").trim() || DEFAULT_USER_ID;
   const forceRegenerate = Boolean(body.force);
+  const translationMode = body.translation_mode === "both" ? "both" : "en";
   const dateKey = todayDateKey();
 
   const { data: existing, error: existingError } = await supabase
@@ -218,7 +223,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const reflection = {
+    const reflection: Record<string, unknown> = {
       generatedForDate: dateKey,
       watchlistCount: stockContexts.length,
       stocks: stockContexts,
@@ -241,6 +246,29 @@ export async function POST(request: Request) {
         confidenceNotes: ai.confidence_notes ?? "",
       },
     };
+
+    let translationWarning = "";
+    if (translationMode === "both") {
+      try {
+        const translatedChunk = await translateReflection({
+          reflection: { analysis: reflection.analysis },
+          targetLanguage: "zh-CN",
+        });
+        const translatedAnalysis =
+          translatedChunk && typeof translatedChunk === "object"
+            ? (translatedChunk as { analysis?: unknown }).analysis
+            : null;
+        if (translatedAnalysis && typeof translatedAnalysis === "object") {
+          reflection.analysisTranslations = {
+            zhCN: translatedAnalysis,
+          };
+        } else {
+          translationWarning = "Chinese translation failed validation; English report saved only.";
+        }
+      } catch {
+        translationWarning = "Chinese translation failed; English report saved only.";
+      }
+    }
 
     const upsertPayload = {
       user_id: userId,
@@ -266,6 +294,8 @@ export async function POST(request: Request) {
       reflection,
       generatedAt: upsertPayload.generated_at,
       cacheAvailable,
+      translationMode,
+      translationWarning,
     });
   } catch (error) {
     return Response.json(

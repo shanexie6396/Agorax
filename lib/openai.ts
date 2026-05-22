@@ -133,3 +133,83 @@ Avoid direct buy/sell advice.
     throw new Error("OpenAI returned invalid JSON content");
   }
 }
+
+export async function translateReflection(args: {
+  reflection: unknown;
+  targetLanguage: "zh-CN";
+}) {
+  const apiKey = getOpenAiApiKey();
+  const model = process.env.OPENAI_MODEL || "gpt-5.4";
+
+  const systemPrompt = `
+You are a financial-report translation assistant.
+Translate user-facing text values in the provided JSON into Simplified Chinese.
+Return valid JSON only.
+Keep JSON keys and structure exactly unchanged.
+Do not add or remove fields.
+Do not translate ticker symbols, dates, percentages, numeric values, currencies, or enum tokens.
+Keep stance tokens exactly as HOLD / REFINE / RECONSIDER when present.
+Do not include markdown code fences.
+`;
+
+  const userContent = {
+    target_language: args.targetLanguage,
+    reflection: args.reflection,
+  };
+
+  let response: Response;
+  try {
+    response = await fetchOpenAiWithRetry("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: systemPrompt.trim() },
+          { role: "user", content: JSON.stringify(userContent) },
+        ],
+      }),
+      cache: "no-store",
+    });
+  } catch (error) {
+    if (isTransientNetworkError(error)) {
+      throw new Error("OpenAI network error: fetch failed");
+    }
+    throw error instanceof Error ? error : new Error("OpenAI translation request failed");
+  }
+
+  if (!response.ok) {
+    throw new Error(`OpenAI translation request failed: ${response.status}`);
+  }
+
+  const data = (await response.json()) as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new Error("OpenAI translation returned empty content");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    throw new Error("OpenAI translation returned invalid JSON content");
+  }
+
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("OpenAI translation returned invalid payload");
+  }
+
+  const translated = (parsed as Record<string, unknown>).reflection;
+  if (!translated || typeof translated !== "object") {
+    throw new Error("OpenAI translation missing reflection payload");
+  }
+
+  return translated;
+}
