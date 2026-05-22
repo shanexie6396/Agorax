@@ -23,6 +23,10 @@ type ReflectionData = {
   stocks: Array<{
     ticker: string;
     companyName: string | null;
+    thesisNotes?: {
+      sentimentStatus?: string | null;
+      thesisNow?: string | null;
+    };
     total3BusinessDayPercentChange: number | null;
     recentTradingDays: Array<{
       date: string;
@@ -78,6 +82,45 @@ export default function MarketPage() {
         ))}
       </ul>
     );
+  }
+
+  function describeThesisStance(
+    stance: string,
+    suggestedAction: string,
+    thesisImplication: string
+  ) {
+    const normalized = stance.trim().toUpperCase();
+
+    if (normalized === "HOLD") {
+      return {
+        label: "Hold",
+        detail: "Current view still fits recent data.",
+      };
+    }
+
+    if (normalized === "RECONSIDER") {
+      return {
+        label: "Reconsider",
+        detail:
+          suggestedAction ||
+          thesisImplication ||
+          "Core assumptions may be breaking; rebuild your view from first principles.",
+      };
+    }
+
+    return {
+      label: "Refine",
+      detail:
+        suggestedAction ||
+        thesisImplication ||
+        "Adjust assumptions, triggers, or timeframe to match new information.",
+    };
+  }
+
+  function formatSentimentLabel(value: string | null | undefined) {
+    const normalized = String(value ?? "").trim().toLowerCase();
+    if (!normalized) return "—";
+    return `${normalized.charAt(0).toUpperCase()}${normalized.slice(1)}`;
   }
 
   async function generateMarketReflection(force = false) {
@@ -286,7 +329,10 @@ export default function MarketPage() {
 
             <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
               <p className="text-sm font-semibold text-amber-900">
-                Thesis Check (Hold, Refine, or Reconsider)
+                Thesis Check (Hold Thesis, Refine Thesis, or Reconsider Thesis)
+              </p>
+              <p className="mt-1 text-xs text-amber-800">
+                Note: "Hold" means hold your current thesis stance, not a buy/sell/hold trade call.
               </p>
               {reflection.analysis.thesisCheckRows &&
               reflection.analysis.thesisCheckRows.length > 0 ? (
@@ -295,6 +341,7 @@ export default function MarketPage() {
                     <thead className="bg-amber-100/80 text-left text-amber-900">
                       <tr>
                         <th className="px-3 py-2 font-semibold">Ticker</th>
+                        <th className="px-3 py-2 font-semibold">Your Label</th>
                         <th className="px-3 py-2 font-semibold">Stance</th>
                         <th className="px-3 py-2 font-semibold">Price Move</th>
                         <th className="px-3 py-2 font-semibold">Possible Reasons</th>
@@ -305,12 +352,33 @@ export default function MarketPage() {
                     <tbody className="divide-y divide-amber-100 bg-amber-50/30 text-stone-800">
                       {reflection.analysis.thesisCheckRows.map((row, idx) => (
                         <tr key={`${row.ticker}-${idx}`} className="align-top">
-                          <td className="px-3 py-2 font-semibold">{row.ticker || "—"}</td>
-                          <td className="px-3 py-2">{row.stance || "REFINE"}</td>
-                          <td className="px-3 py-2">{row.priceMoveSummary || "—"}</td>
-                          <td className="px-3 py-2">{row.possibleReasons || "—"}</td>
-                          <td className="px-3 py-2">{row.thesisImplication || "—"}</td>
-                          <td className="px-3 py-2">{row.suggestedAction || "—"}</td>
+                          {(() => {
+                            const thesisStance = describeThesisStance(
+                              row.stance || "REFINE",
+                              row.suggestedAction || "",
+                              row.thesisImplication || ""
+                            );
+                            const stockContext = reflection.stocks.find(
+                              (stock) => stock.ticker?.toUpperCase() === (row.ticker || "").toUpperCase()
+                            );
+                            const sentimentLabel = formatSentimentLabel(
+                              stockContext?.thesisNotes?.sentimentStatus
+                            );
+                            return (
+                              <>
+                                <td className="px-3 py-2 font-semibold">{row.ticker || "—"}</td>
+                                <td className="px-3 py-2">{sentimentLabel}</td>
+                                <td className="px-3 py-2">
+                                  <p className="font-medium">{thesisStance.label}</p>
+                                  <p className="mt-1 text-xs text-stone-600">{thesisStance.detail}</p>
+                                </td>
+                                <td className="px-3 py-2">{row.priceMoveSummary || "—"}</td>
+                                <td className="px-3 py-2">{row.possibleReasons || "—"}</td>
+                                <td className="px-3 py-2">{row.thesisImplication || "—"}</td>
+                                <td className="px-3 py-2">{row.suggestedAction || "—"}</td>
+                              </>
+                            );
+                          })()}
                         </tr>
                       ))}
                     </tbody>

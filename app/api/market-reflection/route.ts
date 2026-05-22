@@ -193,7 +193,7 @@ export async function POST(request: Request) {
   try {
     const ai = await generateInvestmentThinking({
       userPrompt:
-        "Generate a concise market reflection for my watchlist. For each company, explicitly reference my thesis_now and sentiment_status, explain what changed in price, and infer likely drivers from the provided recent news + market context. Add a dedicated thesis_check_rows table-ready output with one row per ticker and fields: ticker, stance (HOLD/REFINE/RECONSIDER), price_move_summary, possible_reasons, thesis_implication, suggested_action. In narrative fields, format company-level points as one company per line (e.g., 'AAPL: ...'). Include key risks and key questions. This is investment thinking, not financial advice.",
+        "Generate a concise market reflection for my watchlist. For each company, explicitly reference my thesis_now and sentiment_status, explain what changed in price, and infer likely drivers from the provided recent news + market context. Add a dedicated thesis_check_rows table-ready output with one row per ticker and fields: ticker, stance (HOLD/REFINE/RECONSIDER where HOLD means hold your current thesis stance, not a buy/sell/hold trading instruction), price_move_summary, possible_reasons, thesis_implication, suggested_action. In narrative fields, format company-level points as one company per line (e.g., 'AAPL: ...'). Include key risks and key questions. This is investment thinking, not financial advice.",
       financeContext: stockContexts.map((item) => ({
         ticker: item.ticker,
         companyName: item.companyName,
